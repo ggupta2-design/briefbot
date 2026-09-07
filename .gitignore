@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.env
+.env.*
+private/
+briefbot.json
+briefbot-output.md
+briefbot-output.json
