@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "title": "Website launch readiness",
+  "audience": "Product and engineering team",
+  "objective": "Confirm the pilot is ready for a limited launch.",
+  "context": [
+    "The private pilot is complete.",
+    "Accessibility feedback has been reviewed."
+  ],
+  "decisions": [
+    "Use a staged rollout.",
+    "Keep the first release invite-only."
+  ],
+  "risks": [
+    {
+      "description": "Final testing could affect the launch date.",
+      "owner": "Project lead"
+    }
+  ],
+  "actions": [
+    {
+      "description": "Complete the regression test checklist.",
+      "owner": "Engineering",
+      "due_on": "2026-09-10"
+    },
+    {
+      "description": "Approve the launch communication.",
+      "owner": "Product",
+      "due_on": null
+    }
+  ]
+}
