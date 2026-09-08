@@ -191,5 +191,5 @@ def test_validate_policy_command_rejects_unknown_fields(tmp_path, capsys):
     assert run(["validate-policy", str(policy)]) == 2
     output = capsys.readouterr()
 
-    assert "unknown fields: secret" in output.err
+    assert "must contain exactly the supported fields" in output.err
     assert "value" not in output.err
