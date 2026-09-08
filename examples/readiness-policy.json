@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "name": "launch-readiness",
+  "min_context_items": 2,
+  "min_decisions": 1,
+  "min_actions": 2,
+  "require_action_owners": true,
+  "require_action_due_dates": true,
+  "require_risk_owners": true,
+  "max_overdue_actions": 0
+}
