@@ -152,3 +152,44 @@ def test_check_command_applies_reusable_policy(tmp_path, capsys):
     assert payload["ready"] is True
     assert payload["policy"] == "launch-ready"
     assert payload["findings"] == []
+
+
+def test_validate_policy_command_reports_rules(tmp_path, capsys):
+    policy = tmp_path / "policy.json"
+    policy.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "name": "review-standard",
+                "min_context_items": 2,
+                "min_decisions": 1,
+                "min_actions": 1,
+                "require_action_owners": True,
+                "require_action_due_dates": True,
+                "require_risk_owners": False,
+                "max_overdue_actions": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert run(["validate-policy", str(policy), "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["valid"] is True
+    assert payload["name"] == "review-standard"
+    assert payload["thresholds"]["min_context_items"] == 2
+
+
+def test_validate_policy_command_rejects_unknown_fields(tmp_path, capsys):
+    policy = tmp_path / "bad-policy.json"
+    policy.write_text(
+        json.dumps({"schema_version": 1, "name": "bad", "secret": "value"}),
+        encoding="utf-8",
+    )
+
+    assert run(["validate-policy", str(policy)]) == 2
+    output = capsys.readouterr()
+
+    assert "unknown fields: secret" in output.err
+    assert "value" not in output.err
