@@ -93,3 +93,47 @@ def test_overdue_action_limit_reports_actual_overdue_count():
 
     assert codes(result) == [ReadinessCode.OVERDUE_ACTION_LIMIT]
     assert result.findings[0].count == 2
+
+
+def test_custom_policy_can_relax_optional_metadata_checks():
+    source = complete_brief(
+        risks=(RiskItem("Schedule risk"),),
+        actions=(ActionItem("Finish tests"),),
+    )
+    policy = ReadinessPolicy(
+        name="early-draft",
+        require_action_owners=False,
+        require_action_due_dates=False,
+        require_risk_owners=False,
+    )
+
+    result = assess_readiness(source, as_of=AS_OF, policy=policy)
+
+    assert result.ready is True
+    assert result.policy_name == "early-draft"
+
+
+def test_custom_policy_enforces_larger_minimums():
+    policy = ReadinessPolicy(
+        name="decision-review",
+        min_context_items=3,
+        min_decisions=2,
+        min_actions=4,
+        max_overdue_actions=5,
+    )
+
+    result = assess_readiness(complete_brief(), as_of=AS_OF, policy=policy)
+
+    counts = {item.code: item.count for item in result.findings}
+    assert counts[ReadinessCode.CONTEXT_BELOW_MINIMUM] == 2
+    assert counts[ReadinessCode.DECISIONS_BELOW_MINIMUM] == 1
+    assert counts[ReadinessCode.ACTIONS_BELOW_MINIMUM] == 3
+
+
+def test_policy_allows_bounded_overdue_work():
+    policy = ReadinessPolicy(max_overdue_actions=1)
+    source = complete_brief(
+        actions=(ActionItem("Late", "Dev", date(2026, 9, 7)),)
+    )
+
+    assert assess_readiness(source, as_of=AS_OF, policy=policy).ready is True
