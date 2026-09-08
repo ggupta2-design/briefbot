@@ -35,6 +35,26 @@ briefbot validate ~/private/project-notes.json --json
 
 Validation reports section counts without echoing note values.
 
+## Check readiness
+
+Validate the example policy, then apply it without printing source values:
+
+```bash
+briefbot validate-policy examples/readiness-policy.json
+briefbot check ~/private/project-notes.json \
+  --policy examples/readiness-policy.json \
+  --as-of 2026-09-08
+briefbot check ~/private/project-notes.json \
+  --policy examples/readiness-policy.json \
+  --as-of 2026-09-08 \
+  --json
+```
+
+Readiness output contains section counts plus aggregate finding codes and
+counts. Exit status 0 means ready, 1 means review required, and 2 means invalid
+input or policy. See [readiness-policies.md](readiness-policies.md) for the
+strict policy schema and finding behavior.
+
 ## Render a brief
 
 ```bash
