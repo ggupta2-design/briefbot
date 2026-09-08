@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — 2026-09-08
+
+- Added strict, versioned reusable readiness policies.
+- Added configurable minimums for context, decisions, and actions.
+- Added checks for action owners, due dates, risk owners, and overdue limits.
+- Added value-free text and JSON readiness reports.
+- Added automation-friendly ready, review-required, and invalid exit statuses.
+- Added standalone policy validation and policy summaries.
+- Added policy, report, privacy, and CLI test coverage.
+- Added an example policy, readiness guide, and expanded safety documentation.
+
 ## 0.1.0 — 2026-09-07
 
 - Added strict, versioned JSON brief inputs.
