@@ -116,14 +116,39 @@ def test_check_command_reports_review_status_without_note_values(
     assert "Garima" not in output
 
 
-def test_check_command_returns_success_for_ready_brief(tmp_path, capsys):
+def test_check_command_applies_reusable_policy(tmp_path, capsys):
     source = write_source(tmp_path)
+    policy = tmp_path / "policy.json"
+    policy.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "name": "launch-ready",
+                "min_context_items": 1,
+                "min_decisions": 1,
+                "min_actions": 1,
+                "require_action_owners": True,
+                "require_action_due_dates": True,
+                "require_risk_owners": False,
+                "max_overdue_actions": 1,
+            }
+        ),
+        encoding="utf-8",
+    )
 
     assert run(
-        ["check", str(source), "--as-of", "2026-09-05", "--json"]
-    ) == 1
+        [
+            "check",
+            str(source),
+            "--as-of",
+            "2026-09-08",
+            "--policy",
+            str(policy),
+            "--json",
+        ]
+    ) == 0
     payload = json.loads(capsys.readouterr().out)
 
-    assert payload["ready"] is False
-    assert payload["error_count"] == 0
-    assert payload["warning_count"] == 1
+    assert payload["ready"] is True
+    assert payload["policy"] == "launch-ready"
+    assert payload["findings"] == []
