@@ -23,7 +23,18 @@ then links it into place atomically. If the destination already exists, the
 operation fails and preserves the original. It does not provide a force or
 overwrite option.
 
-Validation output reports only section counts. Rendered Markdown and JSON
+Validation output reports only section counts. Readiness checks add a policy
+name, section counts, and aggregate finding codes and counts. They never echo
+titles, audiences, objectives, context, decisions, risk descriptions, action
+descriptions, or owner names. Policy names appear in reports, so avoid putting
+sensitive project information in a policy name.
+
+A readiness policy is configuration, not a security control. It can identify
+missing metadata and overdue work, but it cannot determine whether note content
+is accurate, complete, appropriate to share, or free of sensitive information.
+Warnings require review just like errors, and checks never edit the source.
+
+Rendered Markdown and JSON
 intentionally contain source material, because their purpose is to produce the
 brief. Direct rendered output only to an appropriate private location.
 
