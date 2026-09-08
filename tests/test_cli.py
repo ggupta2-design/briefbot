@@ -96,3 +96,34 @@ def test_cli_reports_invalid_source_without_traceback(tmp_path, capsys):
 
     assert run(["validate", str(source)]) == 2
     assert "not valid JSON" in capsys.readouterr().err
+
+
+def test_check_command_reports_review_status_without_note_values(
+    tmp_path, capsys
+):
+    source = write_source(tmp_path)
+
+    assert run(
+        ["check", str(source), "--as-of", "2026-09-08", "--json"]
+    ) == 1
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+
+    assert payload["ready"] is False
+    assert payload["error_count"] == 1
+    assert payload["warning_count"] == 1
+    assert "Private launch" not in output
+    assert "Garima" not in output
+
+
+def test_check_command_returns_success_for_ready_brief(tmp_path, capsys):
+    source = write_source(tmp_path)
+
+    assert run(
+        ["check", str(source), "--as-of", "2026-09-05", "--json"]
+    ) == 1
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["ready"] is False
+    assert payload["error_count"] == 0
+    assert payload["warning_count"] == 1
