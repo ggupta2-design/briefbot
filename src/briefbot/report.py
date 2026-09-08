@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from .planning import Brief, PlannedAction
+from .readiness import ReadinessResult
 
 
 def _action_payload(item: PlannedAction) -> dict[str, Any]:
@@ -94,3 +95,54 @@ def format_brief(brief: Brief, *, as_json: bool = False) -> str:
     else:
         lines.append("- None recorded.")
     return "\n".join(lines) + "\n"
+
+
+def format_readiness(
+    result: ReadinessResult,
+    *,
+    as_json: bool = False,
+) -> str:
+    """Format value-free readiness findings for people or automation."""
+
+    payload = {
+        "as_of": result.as_of.isoformat(),
+        "policy": result.policy_name,
+        "ready": result.ready,
+        "summary": {
+            "context_items": result.context_items,
+            "decisions": result.decisions,
+            "risks": result.risks,
+            "actions": result.actions,
+        },
+        "finding_count": result.finding_count,
+        "error_count": result.error_count,
+        "warning_count": result.warning_count,
+        "findings": [
+            {
+                "code": item.code.value,
+                "severity": item.severity.value,
+                "count": item.count,
+            }
+            for item in result.findings
+        ],
+    }
+    if as_json:
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    lines = [
+        "Brief readiness check",
+        f"As of: {result.as_of.isoformat()}",
+        f"Policy: {result.policy_name}",
+        f"Status: {'ready' if result.ready else 'review required'}",
+        f"Errors: {result.error_count}",
+        f"Warnings: {result.warning_count}",
+    ]
+    if not result.findings:
+        lines.append("Findings: none")
+    else:
+        lines.append("Findings:")
+        lines.extend(
+            f"- {item.code.value}: {item.count} ({item.severity.value})"
+            for item in result.findings
+        )
+    return "\n".join(lines)
