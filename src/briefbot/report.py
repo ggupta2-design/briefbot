@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 from .planning import Brief, PlannedAction
-from .readiness import ReadinessResult
+from .readiness import ReadinessPolicy, ReadinessResult
 
 
 def _action_payload(item: PlannedAction) -> dict[str, Any]:
@@ -146,3 +146,36 @@ def format_readiness(
             for item in result.findings
         )
     return "\n".join(lines)
+
+
+def format_policy(policy: ReadinessPolicy, *, as_json: bool = False) -> str:
+    """Format a validated readiness policy without reading brief content."""
+
+    payload = {
+        "valid": True,
+        "name": policy.name,
+        "thresholds": {
+            "min_context_items": policy.min_context_items,
+            "min_decisions": policy.min_decisions,
+            "min_actions": policy.min_actions,
+            "max_overdue_actions": policy.max_overdue_actions,
+        },
+        "requirements": {
+            "action_owners": policy.require_action_owners,
+            "action_due_dates": policy.require_action_due_dates,
+            "risk_owners": policy.require_risk_owners,
+        },
+    }
+    if as_json:
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    return (
+        f"Readiness policy is valid: {policy.name}\n"
+        f"Minimum context items: {policy.min_context_items}\n"
+        f"Minimum decisions: {policy.min_decisions}\n"
+        f"Minimum actions: {policy.min_actions}\n"
+        f"Maximum overdue actions: {policy.max_overdue_actions}\n"
+        f"Require action owners: {str(policy.require_action_owners).lower()}\n"
+        f"Require action due dates: {str(policy.require_action_due_dates).lower()}\n"
+        f"Require risk owners: {str(policy.require_risk_owners).lower()}"
+    )
