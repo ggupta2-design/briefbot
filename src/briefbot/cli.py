@@ -15,7 +15,7 @@ from .output import write_output
 from .planning import build_brief
 from .policy import load_policy
 from .readiness import ReadinessPolicy, assess_readiness
-from .report import format_brief, format_readiness
+from .report import format_brief, format_policy, format_readiness
 
 
 def _date(value: str) -> date:
@@ -39,6 +39,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate.add_argument("input", type=Path)
     validate.add_argument("--json", action="store_true", dest="as_json")
+
+    validate_policy = commands.add_parser(
+        "validate-policy",
+        help="validate a readiness policy without reading brief notes",
+    )
+    validate_policy.add_argument("policy_file", type=Path)
+    validate_policy.add_argument("--json", action="store_true", dest="as_json")
 
     check = commands.add_parser(
         "check",
@@ -82,6 +89,11 @@ def _validation_summary(source, *, as_json: bool) -> str:
 def run(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.command == "validate-policy":
+            policy = load_policy(args.policy_file)
+            print(format_policy(policy, as_json=args.as_json))
+            return 0
+
         source = load_brief(args.input)
         if args.command == "validate":
             print(_validation_summary(source, as_json=args.as_json))
