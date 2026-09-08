@@ -13,7 +13,9 @@ from .input import load_brief
 from .models import BriefError
 from .output import write_output
 from .planning import build_brief
-from .report import format_brief
+from .policy import load_policy
+from .readiness import ReadinessPolicy, assess_readiness
+from .report import format_brief, format_readiness
 
 
 def _date(value: str) -> date:
@@ -37,6 +39,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate.add_argument("input", type=Path)
     validate.add_argument("--json", action="store_true", dest="as_json")
+
+    check = commands.add_parser(
+        "check",
+        help="check brief readiness without exposing note values",
+    )
+    check.add_argument("input", type=Path)
+    check.add_argument("--as-of", type=_date, default=date.today())
+    check.add_argument("--policy", type=Path)
+    check.add_argument("--json", action="store_true", dest="as_json")
 
     render = commands.add_parser(
         "render",
@@ -75,6 +86,11 @@ def run(argv: Sequence[str] | None = None) -> int:
         if args.command == "validate":
             print(_validation_summary(source, as_json=args.as_json))
             return 0
+        if args.command == "check":
+            policy = load_policy(args.policy) if args.policy else ReadinessPolicy()
+            result = assess_readiness(source, as_of=args.as_of, policy=policy)
+            print(format_readiness(result, as_json=args.as_json))
+            return 0 if result.ready else 1
 
         brief = build_brief(source, as_of=args.as_of)
         content = format_brief(brief, as_json=args.as_json)
