@@ -34,6 +34,16 @@ missing metadata and overdue work, but it cannot determine whether note content
 is accurate, complete, appropriate to share, or free of sensitive information.
 Warnings require review just like errors, and checks never edit the source.
 
+Version comparisons return only changed metadata field names and aggregate
+added, removed, and unchanged counts. They do not return either version's note
+values. BriefBot still reads both complete local files, so operating-system
+permissions and safe storage remain important. A changed owner or due date is
+represented as one removal and one addition; the report does not identify the
+affected action.
+
+Comparison output is a drift signal, not a content review. An unchanged report
+does not prove that a brief is accurate, safe to share, or ready for use.
+
 Rendered Markdown and JSON
 intentionally contain source material, because their purpose is to produce the
 brief. Direct rendered output only to an appropriate private location.
