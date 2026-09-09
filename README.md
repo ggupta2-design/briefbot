@@ -11,6 +11,7 @@ BriefBot focuses on predictable, privacy-aware automation:
 - produce deterministic Markdown or JSON;
 - check brief readiness against strict reusable policies;
 - report only aggregate readiness counts and finding codes;
+- compare brief versions through value-free change summaries;
 - write exports atomically without replacing existing files;
 - keep note contents local and require no account, API key, or network access.
 
@@ -26,6 +27,7 @@ briefbot validate-policy examples/readiness-policy.json
 briefbot check examples/launch-brief.json \
   --policy examples/readiness-policy.json \
   --as-of 2026-09-08
+briefbot diff ~/private/brief-v1.json ~/private/brief-v2.json --json
 briefbot render examples/launch-brief.json --as-of 2026-09-07
 briefbot render examples/launch-brief.json \
   --as-of 2026-09-07 \
@@ -42,9 +44,14 @@ The `check` command applies default or reusable readiness rules for minimum
 sections, ownership, due dates, and overdue work. Its reports contain counts
 and stable finding codes rather than note values, and its exit status
 distinguishes ready, review-required, and invalid inputs.
+The `diff` command reports changed metadata field names and aggregate section
+counts without exposing either version's note values. It preserves duplicate
+items and ignores reordering.
+
 Rendered output contains the supplied notes, so review it before sharing.
 Exports are atomic and refuse to replace an existing path.
 
-See the [usage guide](docs/usage.md) and
+See the [usage guide](docs/usage.md),
+[brief comparison guide](docs/comparing-briefs.md), and
 [readiness policy guide](docs/readiness-policies.md), and
 [privacy and safety guide](docs/privacy-and-safety.md) for details.
