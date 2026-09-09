@@ -232,3 +232,33 @@ def test_diff_command_rejects_invalid_current_version(tmp_path, capsys):
 
     assert run(["diff", str(previous), str(current)]) == 2
     assert "not valid JSON" in capsys.readouterr().err
+
+
+def test_diff_command_exports_without_overwriting(tmp_path, capsys):
+    source = write_source(tmp_path)
+    output = tmp_path / "reports" / "changes.json"
+
+    assert run(
+        [
+            "diff",
+            str(source),
+            str(source),
+            "--json",
+            "--output",
+            str(output),
+        ]
+    ) == 0
+    assert capsys.readouterr().out == "Wrote changes.json\n"
+    assert json.loads(output.read_text(encoding="utf-8"))["changed"] is False
+
+    assert run(
+        [
+            "diff",
+            str(source),
+            str(source),
+            "--json",
+            "--output",
+            str(output),
+        ]
+    ) == 2
+    assert "already exists" in capsys.readouterr().err
