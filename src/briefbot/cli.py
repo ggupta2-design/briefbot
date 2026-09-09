@@ -9,13 +9,14 @@ from datetime import date
 from pathlib import Path
 from typing import Sequence
 
+from .diffing import compare_briefs
 from .input import load_brief
 from .models import BriefError
 from .output import write_output
 from .planning import build_brief
 from .policy import load_policy
 from .readiness import ReadinessPolicy, assess_readiness
-from .report import format_brief, format_policy, format_readiness
+from .report import format_brief, format_diff, format_policy, format_readiness
 
 
 def _date(value: str) -> date:
@@ -56,6 +57,14 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--policy", type=Path)
     check.add_argument("--json", action="store_true", dest="as_json")
 
+    diff = commands.add_parser(
+        "diff",
+        help="compare two brief versions without exposing note values",
+    )
+    diff.add_argument("previous", type=Path)
+    diff.add_argument("current", type=Path)
+    diff.add_argument("--json", action="store_true", dest="as_json")
+
     render = commands.add_parser(
         "render",
         help="render validated source notes as Markdown or JSON",
@@ -93,6 +102,13 @@ def run(argv: Sequence[str] | None = None) -> int:
             policy = load_policy(args.policy_file)
             print(format_policy(policy, as_json=args.as_json))
             return 0
+
+        if args.command == "diff":
+            previous = load_brief(args.previous)
+            current = load_brief(args.current)
+            result = compare_briefs(previous, current)
+            print(format_diff(result, as_json=args.as_json))
+            return 1 if result.changed else 0
 
         source = load_brief(args.input)
         if args.command == "validate":
