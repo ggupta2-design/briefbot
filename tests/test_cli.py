@@ -193,3 +193,42 @@ def test_validate_policy_command_rejects_unknown_fields(tmp_path, capsys):
 
     assert "must contain exactly the supported fields" in output.err
     assert "value" not in output.err
+
+
+def test_diff_command_reports_changes_without_note_values(tmp_path, capsys):
+    previous = write_source(tmp_path)
+    current = tmp_path / "current.json"
+    payload = json.loads(previous.read_text(encoding="utf-8"))
+    payload["title"] = "Highly confidential rename"
+    payload["context"].append("Private customer signal")
+    current.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert run(["diff", str(previous), str(current), "--json"]) == 1
+    output = capsys.readouterr().out
+    report = json.loads(output)
+
+    assert report["changed"] is True
+    assert report["metadata_changed"] == ["title"]
+    assert report["sections"]["context"]["added"] == 1
+    assert "Private launch" not in output
+    assert "Highly confidential rename" not in output
+    assert "Private customer signal" not in output
+
+
+def test_diff_command_returns_success_for_identical_versions(tmp_path, capsys):
+    source = write_source(tmp_path)
+
+    assert run(["diff", str(source), str(source), "--json"]) == 0
+    report = json.loads(capsys.readouterr().out)
+
+    assert report["changed"] is False
+    assert report["total_changes"] == 0
+
+
+def test_diff_command_rejects_invalid_current_version(tmp_path, capsys):
+    previous = write_source(tmp_path)
+    current = tmp_path / "current.json"
+    current.write_text("not json", encoding="utf-8")
+
+    assert run(["diff", str(previous), str(current)]) == 2
+    assert "not valid JSON" in capsys.readouterr().err
