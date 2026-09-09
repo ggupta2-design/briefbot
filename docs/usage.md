@@ -55,6 +55,22 @@ counts. Exit status 0 means ready, 1 means review required, and 2 means invalid
 input or policy. See [readiness-policies.md](readiness-policies.md) for the
 strict policy schema and finding behavior.
 
+## Compare two versions
+
+```bash
+briefbot diff ~/private/brief-v1.json ~/private/brief-v2.json
+briefbot diff ~/private/brief-v1.json ~/private/brief-v2.json --json
+briefbot diff ~/private/brief-v1.json ~/private/brief-v2.json \
+  --json \
+  --output ~/private/reports/changes.json
+```
+
+Comparison output contains changed metadata field names and aggregate section
+counts, not note values. Exit status 0 means identical, 1 means changes were
+detected, and 2 means invalid input or output. Exports are atomic and refuse
+to overwrite. See [comparing-briefs.md](comparing-briefs.md) for exact
+comparison semantics.
+
 ## Render a brief
 
 ```bash
