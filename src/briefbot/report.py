@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from .diffing import BriefDiff
 from .planning import Brief, PlannedAction
 from .readiness import ReadinessPolicy, ReadinessResult
 
@@ -179,3 +180,44 @@ def format_policy(policy: ReadinessPolicy, *, as_json: bool = False) -> str:
         f"Require action due dates: {str(policy.require_action_due_dates).lower()}\n"
         f"Require risk owners: {str(policy.require_risk_owners).lower()}"
     )
+
+
+def format_diff(result: BriefDiff, *, as_json: bool = False) -> str:
+    """Format a value-free comparison for people or automation."""
+
+    sections = {
+        name: {
+            "added": section.added,
+            "removed": section.removed,
+            "unchanged": section.unchanged,
+        }
+        for name, section in (
+            ("context", result.context),
+            ("decisions", result.decisions),
+            ("risks", result.risks),
+            ("actions", result.actions),
+        )
+    }
+    payload = {
+        "changed": result.changed,
+        "total_changes": result.total_changes,
+        "metadata_changed": list(result.metadata_changed),
+        "sections": sections,
+    }
+    if as_json:
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    lines = [
+        "Brief version comparison",
+        f"Status: {'changes detected' if result.changed else 'no changes'}",
+        f"Total changes: {result.total_changes}",
+        "Metadata changed: "
+        + (", ".join(result.metadata_changed) if result.metadata_changed else "none"),
+        "Sections:",
+    ]
+    lines.extend(
+        f"- {name}: +{counts['added']} -{counts['removed']} "
+        f"={counts['unchanged']} unchanged"
+        for name, counts in sections.items()
+    )
+    return "\n".join(lines)
