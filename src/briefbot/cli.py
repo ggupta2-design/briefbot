@@ -64,6 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("previous", type=Path)
     diff.add_argument("current", type=Path)
     diff.add_argument("--json", action="store_true", dest="as_json")
+    diff.add_argument("--output", type=Path)
 
     render = commands.add_parser(
         "render",
@@ -107,7 +108,12 @@ def run(argv: Sequence[str] | None = None) -> int:
             previous = load_brief(args.previous)
             current = load_brief(args.current)
             result = compare_briefs(previous, current)
-            print(format_diff(result, as_json=args.as_json))
+            content = format_diff(result, as_json=args.as_json)
+            if args.output is None:
+                print(content)
+            else:
+                destination = write_output(args.output, content)
+                print(f"Wrote {destination.name}")
             return 1 if result.changed else 0
 
         source = load_brief(args.input)
