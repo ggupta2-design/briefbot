@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0 — 2026-09-09
+
+- Added deterministic comparisons between validated brief versions.
+- Added multiset-aware change counts that preserve duplicate items.
+- Added changed-field signals for title, audience, and objective metadata.
+- Added aggregate added, removed, and unchanged section counts.
+- Added privacy-safe Markdown and JSON comparison reports.
+- Added unchanged, changed, and invalid automation exit statuses.
+- Added atomic comparison exports that never overwrite existing reports.
+- Added comparison engine, report, privacy, CLI, and export tests.
+- Added a comparison guide and expanded usage and safety documentation.
+
 ## 0.2.0 — 2026-09-08
 
 - Added strict, versioned reusable readiness policies.
