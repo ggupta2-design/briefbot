@@ -34,6 +34,16 @@ missing metadata and overdue work, but it cannot determine whether note content
 is accurate, complete, appropriate to share, or free of sensitive information.
 Warnings require review just like errors, and checks never edit the source.
 
+Folder audits report only aggregate totals. They omit paths and filenames as
+well as all brief values. Invalid files are counted but not identified, which
+prevents error output from leaking sensitive filenames. Use single-file
+validation privately when a folder report shows invalid inputs.
+
+Folder discovery rejects a symbolic-link root, skips linked entries, never
+follows directory links, and stops if the explicit file limit is exceeded.
+These safeguards reduce accidental traversal, but they do not replace
+operating-system permissions or careful directory selection.
+
 Version comparisons return only changed metadata field names and aggregate
 added, removed, and unchanged counts. They do not return either version's note
 values. BriefBot still reads both complete local files, so operating-system
