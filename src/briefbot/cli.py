@@ -9,6 +9,7 @@ from datetime import date
 from pathlib import Path
 from typing import Sequence
 
+from .batch import audit_brief_folder
 from .diffing import compare_briefs
 from .input import load_brief
 from .models import BriefError
@@ -16,7 +17,13 @@ from .output import write_output
 from .planning import build_brief
 from .policy import load_policy
 from .readiness import ReadinessPolicy, assess_readiness
-from .report import format_brief, format_diff, format_policy, format_readiness
+from .report import (
+    format_batch_readiness,
+    format_brief,
+    format_diff,
+    format_policy,
+    format_readiness,
+)
 
 
 def _date(value: str) -> date:
@@ -56,6 +63,17 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--as-of", type=_date, default=date.today())
     check.add_argument("--policy", type=Path)
     check.add_argument("--json", action="store_true", dest="as_json")
+
+    check_folder = commands.add_parser(
+        "check-folder",
+        help="audit a bounded folder of briefs without exposing values",
+    )
+    check_folder.add_argument("input", type=Path)
+    check_folder.add_argument("--as-of", type=_date, default=date.today())
+    check_folder.add_argument("--policy", type=Path)
+    check_folder.add_argument("--recursive", action="store_true")
+    check_folder.add_argument("--max-files", type=int, default=100)
+    check_folder.add_argument("--json", action="store_true", dest="as_json")
 
     diff = commands.add_parser(
         "diff",
@@ -103,6 +121,18 @@ def run(argv: Sequence[str] | None = None) -> int:
             policy = load_policy(args.policy_file)
             print(format_policy(policy, as_json=args.as_json))
             return 0
+
+        if args.command == "check-folder":
+            policy = load_policy(args.policy) if args.policy else ReadinessPolicy()
+            result = audit_brief_folder(
+                args.input,
+                as_of=args.as_of,
+                policy=policy,
+                recursive=args.recursive,
+                max_files=args.max_files,
+            )
+            print(format_batch_readiness(result, as_json=args.as_json))
+            return 0 if result.all_ready else 1
 
         if args.command == "diff":
             previous = load_brief(args.previous)
