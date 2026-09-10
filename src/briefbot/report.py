@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from .batch import BatchReadinessResult
 from .diffing import BriefDiff
 from .planning import Brief, PlannedAction
 from .readiness import ReadinessPolicy, ReadinessResult
@@ -220,4 +221,59 @@ def format_diff(result: BriefDiff, *, as_json: bool = False) -> str:
         f"={counts['unchanged']} unchanged"
         for name, counts in sections.items()
     )
+    return "\n".join(lines)
+
+
+def format_batch_readiness(
+    result: BatchReadinessResult,
+    *,
+    as_json: bool = False,
+) -> str:
+    """Format a path-free folder readiness summary."""
+
+    payload = {
+        "as_of": result.as_of.isoformat(),
+        "policy": result.policy_name,
+        "all_ready": result.all_ready,
+        "summary": {
+            "discovered": result.discovered,
+            "valid": result.valid,
+            "invalid": result.invalid,
+            "ready": result.ready,
+            "review_required": result.review_required,
+        },
+        "finding_count": result.finding_count,
+        "findings": [
+            {
+                "code": item.code.value,
+                "occurrences": item.occurrences,
+                "briefs": item.briefs,
+            }
+            for item in result.findings
+        ],
+    }
+    if as_json:
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    lines = [
+        "Brief folder readiness audit",
+        f"As of: {result.as_of.isoformat()}",
+        f"Policy: {result.policy_name}",
+        f"Status: {'all ready' if result.all_ready else 'review required'}",
+        f"Discovered: {result.discovered}",
+        f"Valid: {result.valid}",
+        f"Invalid: {result.invalid}",
+        f"Ready: {result.ready}",
+        f"Review required: {result.review_required}",
+        f"Finding occurrences: {result.finding_count}",
+    ]
+    if not result.findings:
+        lines.append("Findings: none")
+    else:
+        lines.append("Findings:")
+        lines.extend(
+            f"- {item.code.value}: {item.occurrences} occurrence(s) "
+            f"across {item.briefs} brief(s)"
+            for item in result.findings
+        )
     return "\n".join(lines)
