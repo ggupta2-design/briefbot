@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
+from .input import load_brief
 from .models import BriefError
+from .readiness import ReadinessPolicy, assess_readiness
 
 
 def _file_limit(value: int) -> int:
@@ -53,4 +57,60 @@ def discover_brief_files(
             found,
             key=lambda path: path.relative_to(directory).as_posix().casefold(),
         )
+    )
+
+
+@dataclass(frozen=True)
+class BatchReadinessResult:
+    """Aggregate, value-free readiness result for one folder."""
+
+    as_of: date
+    policy_name: str
+    discovered: int
+    valid: int
+    invalid: int
+    ready: int
+    review_required: int
+
+    @property
+    def all_ready(self) -> bool:
+        return self.discovered > 0 and self.invalid == 0 and self.review_required == 0
+
+
+def audit_brief_folder(
+    root: str | Path,
+    *,
+    as_of: date,
+    policy: ReadinessPolicy | None = None,
+    recursive: bool = False,
+    max_files: int = 100,
+) -> BatchReadinessResult:
+    """Audit each discovered brief while isolating invalid files."""
+
+    selected = policy or ReadinessPolicy()
+    paths = discover_brief_files(
+        root,
+        recursive=recursive,
+        max_files=max_files,
+    )
+    valid = ready = review_required = 0
+    for path in paths:
+        try:
+            source = load_brief(path)
+        except BriefError:
+            continue
+        valid += 1
+        if assess_readiness(source, as_of=as_of, policy=selected).ready:
+            ready += 1
+        else:
+            review_required += 1
+
+    return BatchReadinessResult(
+        as_of=as_of,
+        policy_name=selected.name,
+        discovered=len(paths),
+        valid=valid,
+        invalid=len(paths) - valid,
+        ready=ready,
+        review_required=review_required,
     )
