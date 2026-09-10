@@ -12,6 +12,7 @@ BriefBot focuses on predictable, privacy-aware automation:
 - check brief readiness against strict reusable policies;
 - report only aggregate readiness counts and finding codes;
 - compare brief versions through value-free change summaries;
+- audit bounded folders with invalid-file isolation and aggregate findings;
 - write exports atomically without replacing existing files;
 - keep note contents local and require no account, API key, or network access.
 
@@ -28,6 +29,10 @@ briefbot check examples/launch-brief.json \
   --policy examples/readiness-policy.json \
   --as-of 2026-09-08
 briefbot diff ~/private/brief-v1.json ~/private/brief-v2.json --json
+briefbot check-folder ~/private/briefs \
+  --policy examples/readiness-policy.json \
+  --as-of 2026-09-10 \
+  --json
 briefbot render examples/launch-brief.json --as-of 2026-09-07
 briefbot render examples/launch-brief.json \
   --as-of 2026-09-07 \
@@ -48,10 +53,15 @@ The `diff` command reports changed metadata field names and aggregate section
 counts without exposing either version's note values. It preserves duplicate
 items and ignores reordering.
 
+The `check-folder` command scans a bounded set of JSON briefs without
+following symbolic links. It isolates invalid files and reports only aggregate
+ready, review-required, invalid, and finding counts.
+
 Rendered output contains the supplied notes, so review it before sharing.
 Exports are atomic and refuse to replace an existing path.
 
 See the [usage guide](docs/usage.md),
-[brief comparison guide](docs/comparing-briefs.md), and
+[folder readiness guide](docs/folder-readiness.md),
+[brief comparison guide](docs/comparing-briefs.md),
 [readiness policy guide](docs/readiness-policies.md), and
 [privacy and safety guide](docs/privacy-and-safety.md) for details.
