@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 — 2026-09-10
+
+- Added shallow and recursive folder-level brief discovery.
+- Added deterministic ordering, symbolic-link safeguards, and explicit file limits.
+- Added per-file validation isolation for malformed or schema-invalid briefs.
+- Added aggregate ready, review-required, invalid, and finding totals.
+- Added path-free text and JSON folder readiness reports.
+- Added automation-friendly folder audit exit statuses.
+- Added atomic folder report exports that never overwrite existing files.
+- Added discovery, aggregation, policy, privacy, CLI, and export tests.
+- Added a folder readiness guide and expanded usage and safety documentation.
+
 ## 0.3.0 — 2026-09-09
 
 - Added deterministic comparisons between validated brief versions.
