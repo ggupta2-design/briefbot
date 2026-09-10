@@ -325,3 +325,45 @@ def test_check_folder_applies_policy_and_returns_success(tmp_path, capsys):
 
     assert payload["all_ready"] is True
     assert payload["policy"] == "portfolio-standard"
+
+
+def test_check_folder_supports_recursive_discovery(tmp_path, capsys):
+    folder = tmp_path / "briefs"
+    nested = folder / "nested"
+    nested.mkdir(parents=True)
+    write_source(nested)
+
+    assert run(
+        [
+            "check-folder",
+            str(folder),
+            "--recursive",
+            "--as-of",
+            "2026-09-10",
+            "--json",
+        ]
+    ) == 1
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["summary"]["discovered"] == 1
+    assert payload["summary"]["valid"] == 1
+
+
+def test_check_folder_enforces_file_limit(tmp_path, capsys):
+    folder = tmp_path / "briefs"
+    folder.mkdir()
+    write_source(folder)
+    second = folder / "second.json"
+    second.write_text(
+        (folder / "notes.json").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    assert run(
+        ["check-folder", str(folder), "--max-files", "1"]
+    ) == 2
+    error = capsys.readouterr().err
+
+    assert "more than max_files=1" in error
+    assert "notes.json" not in error
+    assert "second.json" not in error
