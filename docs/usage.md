@@ -55,6 +55,26 @@ counts. Exit status 0 means ready, 1 means review required, and 2 means invalid
 input or policy. See [readiness-policies.md](readiness-policies.md) for the
 strict policy schema and finding behavior.
 
+## Audit a folder
+
+```bash
+briefbot check-folder ~/private/briefs \
+  --policy examples/readiness-policy.json \
+  --as-of 2026-09-10
+briefbot check-folder ~/private/briefs \
+  --recursive \
+  --max-files 50 \
+  --as-of 2026-09-10 \
+  --json \
+  --output ~/private/reports/readiness.json
+```
+
+Folder audits isolate invalid inputs and report aggregate ready,
+review-required, invalid, and finding counts without printing paths or note
+values. Exit status 0 means all discovered briefs are valid and ready, 1 means
+review is required, and 2 means invalid configuration. See
+[folder-readiness.md](folder-readiness.md) for discovery and privacy rules.
+
 ## Compare two versions
 
 ```bash
