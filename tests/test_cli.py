@@ -367,3 +367,27 @@ def test_check_folder_enforces_file_limit(tmp_path, capsys):
     assert "more than max_files=1" in error
     assert "notes.json" not in error
     assert "second.json" not in error
+
+
+def test_check_folder_exports_report_without_overwriting(tmp_path, capsys):
+    folder = tmp_path / "briefs"
+    folder.mkdir()
+    write_source(folder)
+    output = tmp_path / "reports" / "portfolio.json"
+    command = [
+        "check-folder",
+        str(folder),
+        "--as-of",
+        "2026-09-10",
+        "--json",
+        "--output",
+        str(output),
+    ]
+
+    assert run(command) == 1
+    assert capsys.readouterr().out == "Wrote portfolio.json\n"
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["summary"]["discovered"] == 1
+
+    assert run(command) == 2
+    assert "already exists" in capsys.readouterr().err
