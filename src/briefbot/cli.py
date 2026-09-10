@@ -74,6 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
     check_folder.add_argument("--recursive", action="store_true")
     check_folder.add_argument("--max-files", type=int, default=100)
     check_folder.add_argument("--json", action="store_true", dest="as_json")
+    check_folder.add_argument("--output", type=Path)
 
     diff = commands.add_parser(
         "diff",
@@ -131,7 +132,12 @@ def run(argv: Sequence[str] | None = None) -> int:
                 recursive=args.recursive,
                 max_files=args.max_files,
             )
-            print(format_batch_readiness(result, as_json=args.as_json))
+            content = format_batch_readiness(result, as_json=args.as_json)
+            if args.output is None:
+                print(content)
+            else:
+                destination = write_output(args.output, content)
+                print(f"Wrote {destination.name}")
             return 0 if result.all_ready else 1
 
         if args.command == "diff":
