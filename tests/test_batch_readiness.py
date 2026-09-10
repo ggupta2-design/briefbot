@@ -83,3 +83,27 @@ def test_applies_custom_policy_to_every_valid_brief(tmp_path):
 
     assert result.policy_name == "relaxed"
     assert result.ready == 1
+
+
+def test_aggregates_finding_occurrences_and_affected_briefs(tmp_path):
+    write_brief(tmp_path / "one.json", owner=None, due_on=None)
+    write_brief(tmp_path / "two.json", owner=None, due_on="2026-09-11")
+
+    result = audit_brief_folder(tmp_path, as_of=date(2026, 9, 10))
+    findings = {item.code.value: item for item in result.findings}
+
+    assert result.finding_count == 5
+    assert findings["unowned_action"].occurrences == 2
+    assert findings["unowned_action"].briefs == 2
+    assert findings["unowned_risk"].occurrences == 2
+    assert findings["unscheduled_action"].occurrences == 1
+    assert findings["unscheduled_action"].briefs == 1
+
+
+def test_finding_order_is_deterministic(tmp_path):
+    write_brief(tmp_path / "review.json", owner=None, due_on=None)
+
+    result = audit_brief_folder(tmp_path, as_of=date(2026, 9, 10))
+
+    codes = [item.code.value for item in result.findings]
+    assert codes == sorted(codes)
