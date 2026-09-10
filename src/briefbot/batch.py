@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .input import load_brief
 from .models import BriefError
-from .readiness import ReadinessPolicy, assess_readiness
+from .readiness import ReadinessCode, ReadinessPolicy, assess_readiness
 
 
 def _file_limit(value: int) -> int:
@@ -61,6 +61,15 @@ def discover_brief_files(
 
 
 @dataclass(frozen=True)
+class BatchFinding:
+    """Aggregate count for one finding code across briefs."""
+
+    code: ReadinessCode
+    occurrences: int
+    briefs: int
+
+
+@dataclass(frozen=True)
 class BatchReadinessResult:
     """Aggregate, value-free readiness result for one folder."""
 
@@ -71,6 +80,11 @@ class BatchReadinessResult:
     invalid: int
     ready: int
     review_required: int
+    findings: tuple[BatchFinding, ...] = ()
+
+    @property
+    def finding_count(self) -> int:
+        return sum(item.occurrences for item in self.findings)
 
     @property
     def all_ready(self) -> bool:
@@ -94,16 +108,24 @@ def audit_brief_folder(
         max_files=max_files,
     )
     valid = ready = review_required = 0
+    finding_occurrences: dict[ReadinessCode, int] = {}
+    finding_briefs: dict[ReadinessCode, int] = {}
     for path in paths:
         try:
             source = load_brief(path)
         except BriefError:
             continue
         valid += 1
-        if assess_readiness(source, as_of=as_of, policy=selected).ready:
+        readiness = assess_readiness(source, as_of=as_of, policy=selected)
+        if readiness.ready:
             ready += 1
         else:
             review_required += 1
+        for finding in readiness.findings:
+            finding_occurrences[finding.code] = (
+                finding_occurrences.get(finding.code, 0) + finding.count
+            )
+            finding_briefs[finding.code] = finding_briefs.get(finding.code, 0) + 1
 
     return BatchReadinessResult(
         as_of=as_of,
@@ -113,4 +135,12 @@ def audit_brief_folder(
         invalid=len(paths) - valid,
         ready=ready,
         review_required=review_required,
+        findings=tuple(
+            BatchFinding(
+                code=code,
+                occurrences=finding_occurrences[code],
+                briefs=finding_briefs[code],
+            )
+            for code in sorted(finding_occurrences, key=lambda item: item.value)
+        ),
     )
