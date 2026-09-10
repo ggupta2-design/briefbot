@@ -262,3 +262,66 @@ def test_diff_command_exports_without_overwriting(tmp_path, capsys):
         ]
     ) == 2
     assert "already exists" in capsys.readouterr().err
+
+
+def test_check_folder_reports_aggregate_results(tmp_path, capsys):
+    folder = tmp_path / "briefs"
+    folder.mkdir()
+    write_source(folder)
+    (folder / "invalid.json").write_text("not json", encoding="utf-8")
+
+    assert run(
+        ["check-folder", str(folder), "--as-of", "2026-09-10", "--json"]
+    ) == 1
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+
+    assert payload["summary"] == {
+        "discovered": 2,
+        "invalid": 1,
+        "ready": 0,
+        "review_required": 1,
+        "valid": 1,
+    }
+    assert "notes.json" not in output
+    assert "Private launch" not in output
+    assert "Garima" not in output
+
+
+def test_check_folder_applies_policy_and_returns_success(tmp_path, capsys):
+    folder = tmp_path / "briefs"
+    folder.mkdir()
+    write_source(folder)
+    policy = tmp_path / "policy.json"
+    policy.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "name": "portfolio-standard",
+                "min_context_items": 1,
+                "min_decisions": 1,
+                "min_actions": 1,
+                "require_action_owners": True,
+                "require_action_due_dates": True,
+                "require_risk_owners": False,
+                "max_overdue_actions": 1,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert run(
+        [
+            "check-folder",
+            str(folder),
+            "--as-of",
+            "2026-09-10",
+            "--policy",
+            str(policy),
+            "--json",
+        ]
+    ) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["all_ready"] is True
+    assert payload["policy"] == "portfolio-standard"
