@@ -7,6 +7,7 @@ from typing import Any
 
 from .batch import BatchReadinessResult
 from .diffing import BriefDiff
+from .disclosure import SharedBrief
 from .planning import Brief, PlannedAction
 from .readiness import ReadinessPolicy, ReadinessResult
 
@@ -277,3 +278,81 @@ def format_batch_readiness(
             for item in result.findings
         )
     return "\n".join(lines)
+
+
+def shared_brief_to_dict(brief: SharedBrief) -> dict[str, Any]:
+    """Return only fields retained in a policy-controlled share view."""
+
+    payload: dict[str, Any] = {
+        "policy": brief.policy_name,
+        "title": brief.title,
+        "audience": brief.audience,
+        "as_of": brief.as_of.isoformat(),
+        "included_sections": list(brief.included_sections),
+    }
+    if "objective" in brief.included_sections:
+        payload["objective"] = brief.objective
+    if "context" in brief.included_sections:
+        payload["context"] = list(brief.context)
+    if "decisions" in brief.included_sections:
+        payload["decisions"] = list(brief.decisions)
+    if "risks" in brief.included_sections:
+        payload["risks"] = [
+            {"description": item.description, "owner": item.owner}
+            for item in brief.risks
+        ]
+    if "actions" in brief.included_sections:
+        payload["actions"] = [
+            {
+                "description": item.description,
+                "owner": item.owner,
+                "due_on": item.due_on.isoformat() if item.due_on else None,
+            }
+            for item in brief.actions
+        ]
+    return payload
+
+
+def format_shared_brief(brief: SharedBrief, *, as_json: bool = False) -> str:
+    """Format a policy-controlled share-ready brief."""
+
+    if as_json:
+        return json.dumps(shared_brief_to_dict(brief), indent=2, sort_keys=True)
+
+    lines = [
+        f"# {brief.title}",
+        "",
+        f"**Audience:** {brief.audience}",
+        f"**As of:** {brief.as_of.isoformat()}",
+        f"**Disclosure policy:** {brief.policy_name}",
+    ]
+    if "objective" in brief.included_sections:
+        lines.extend(["", "## Objective", "", brief.objective or ""])
+    for name, heading, values in (
+        ("context", "Context", brief.context),
+        ("decisions", "Decisions", brief.decisions),
+    ):
+        if name in brief.included_sections:
+            lines.extend(["", *_bullet_section(heading, values)])
+    if "risks" in brief.included_sections:
+        lines.extend(["", "## Risks", ""])
+        lines.extend(
+            f"- {item.description}"
+            + (f" — Owner: {item.owner}" if item.owner else "")
+            for item in brief.risks
+        )
+        if not brief.risks:
+            lines.append("- None recorded.")
+    if "actions" in brief.included_sections:
+        lines.extend(["", "## Actions", ""])
+        for item in brief.actions:
+            metadata = []
+            if item.owner:
+                metadata.append(f"owner: {item.owner}")
+            if item.due_on:
+                metadata.append(f"due: {item.due_on.isoformat()}")
+            suffix = f" ({'; '.join(metadata)})" if metadata else ""
+            lines.append(f"- {item.description}{suffix}")
+        if not brief.actions:
+            lines.append("- None recorded.")
+    return "\n".join(lines) + "\n"
