@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 — 2026-09-11
+
+- Added strict, versioned disclosure policies for controlled sharing.
+- Added section controls for objectives, context, decisions, risks, and actions.
+- Added independent controls for owner names and due dates.
+- Added share views that remove disallowed values before formatting.
+- Added deterministic Markdown and JSON shared brief reports.
+- Added standalone disclosure policy validation and summaries.
+- Added atomic shared brief exports that never overwrite existing files.
+- Added model, policy, privacy, report, CLI, and export tests.
+- Added a conservative example policy and controlled-sharing documentation.
+
 ## 0.4.0 — 2026-09-10
 
 - Added shallow and recursive folder-level brief discovery.
