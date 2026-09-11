@@ -445,3 +445,28 @@ def test_share_command_rejects_invalid_policy(tmp_path, capsys):
 
     assert run(["share", str(source), "--policy", str(policy)]) == 2
     assert "disclosure policy is not valid JSON" in capsys.readouterr().err
+
+
+def test_share_command_exports_without_overwriting(tmp_path, capsys):
+    source = write_source(tmp_path)
+    policy = write_disclosure_policy(tmp_path)
+    output = tmp_path / "shared" / "brief.json"
+    command = [
+        "share",
+        str(source),
+        "--policy",
+        str(policy),
+        "--as-of",
+        "2026-09-11",
+        "--json",
+        "--output",
+        str(output),
+    ]
+
+    assert run(command) == 0
+    assert capsys.readouterr().out == "Wrote brief.json\n"
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert "context" not in payload
+
+    assert run(command) == 2
+    assert "already exists" in capsys.readouterr().err
