@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "name": "external-update",
+  "include_objective": true,
+  "include_context": false,
+  "include_decisions": true,
+  "include_risks": false,
+  "include_actions": true,
+  "include_owner_names": false,
+  "include_due_dates": true
+}
