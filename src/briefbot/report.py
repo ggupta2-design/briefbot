@@ -7,7 +7,7 @@ from typing import Any
 
 from .batch import BatchReadinessResult
 from .diffing import BriefDiff
-from .disclosure import SharedBrief
+from .disclosure import DisclosurePolicy, SharedBrief
 from .planning import Brief, PlannedAction
 from .readiness import ReadinessPolicy, ReadinessResult
 
@@ -356,3 +356,38 @@ def format_shared_brief(brief: SharedBrief, *, as_json: bool = False) -> str:
         if not brief.actions:
             lines.append("- None recorded.")
     return "\n".join(lines) + "\n"
+
+
+def format_disclosure_policy(
+    policy: DisclosurePolicy,
+    *,
+    as_json: bool = False,
+) -> str:
+    """Format a validated disclosure policy without reading a brief."""
+
+    payload = {
+        "valid": True,
+        "name": policy.name,
+        "sections": {
+            "objective": policy.include_objective,
+            "context": policy.include_context,
+            "decisions": policy.include_decisions,
+            "risks": policy.include_risks,
+            "actions": policy.include_actions,
+        },
+        "metadata": {
+            "owner_names": policy.include_owner_names,
+            "due_dates": policy.include_due_dates,
+        },
+    }
+    if as_json:
+        return json.dumps(payload, indent=2, sort_keys=True)
+    permitted = [
+        name for name, enabled in payload["sections"].items() if enabled
+    ]
+    return (
+        f"Disclosure policy is valid: {policy.name}\n"
+        f"Included sections: {', '.join(permitted) if permitted else 'none'}\n"
+        f"Include owner names: {str(policy.include_owner_names).lower()}\n"
+        f"Include due dates: {str(policy.include_due_dates).lower()}"
+    )
