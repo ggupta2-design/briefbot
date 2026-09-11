@@ -470,3 +470,17 @@ def test_share_command_exports_without_overwriting(tmp_path, capsys):
 
     assert run(command) == 2
     assert "already exists" in capsys.readouterr().err
+
+
+def test_validate_disclosure_policy_command(tmp_path, capsys):
+    policy = write_disclosure_policy(tmp_path)
+
+    assert run(
+        ["validate-disclosure-policy", str(policy), "--json"]
+    ) == 0
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["valid"] is True
+    assert payload["name"] == "external"
+    assert payload["sections"]["context"] is False
+    assert payload["metadata"]["owner_names"] is False
