@@ -102,6 +102,32 @@ The explicit review date makes overdue and due-today classification
 reproducible. Actions are ordered as overdue, due today, upcoming, and
 unscheduled. Ties use due date, owner, and description for stable output.
 
+## Create a controlled share view
+
+Validate the disclosure policy without reading source notes:
+
+```bash
+briefbot validate-disclosure-policy examples/disclosure-policy.json
+```
+
+Then create a view containing only permitted fields:
+
+```bash
+briefbot share ~/private/project-notes.json \
+  --policy examples/disclosure-policy.json \
+  --as-of 2026-09-11
+briefbot share ~/private/project-notes.json \
+  --policy examples/disclosure-policy.json \
+  --as-of 2026-09-11 \
+  --json \
+  --output ~/private/shared/project-update.json
+```
+
+Disabled sections are omitted entirely. Owner names and due dates are removed
+before formatting when disallowed. See
+[controlled-sharing.md](controlled-sharing.md) for the strict policy schema
+and important review boundary.
+
 ## Export safely
 
 ```bash
