@@ -58,6 +58,23 @@ Rendered Markdown and JSON
 intentionally contain source material, because their purpose is to produce the
 brief. Direct rendered output only to an appropriate private location.
 
+## Disclosure policies
+
+The `share` command creates a separate view and removes excluded sections,
+owner names, and due dates before formatting. The policy name and permitted
+section list remain in output so reviewers can see which controls were used.
+Validate a disclosure policy before opening source notes when possible.
+
+Disclosure controls operate by field, not by content. Text allowed by a policy
+may still mention confidential information, credentials, personal data, names,
+or dates. A policy cannot understand or sanitize those meanings. Review every
+share-ready output before distribution and choose a conservative policy for
+external recipients.
+
+BriefBot does not identify or verify recipients, encrypt exports, send
+messages, upload files, or revoke shared copies. Keep output in an appropriate
+private location until a person approves its destination.
+
 ## Automation boundary
 
 Action states are date calculations, not external actions. BriefBot never
