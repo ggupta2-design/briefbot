@@ -23,6 +23,7 @@ from .report import (
     format_batch_readiness,
     format_brief,
     format_diff,
+    format_disclosure_policy,
     format_policy,
     format_readiness,
     format_shared_brief,
@@ -57,6 +58,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_policy.add_argument("policy_file", type=Path)
     validate_policy.add_argument("--json", action="store_true", dest="as_json")
+
+    validate_disclosure = commands.add_parser(
+        "validate-disclosure-policy",
+        help="validate a sharing policy without reading brief notes",
+    )
+    validate_disclosure.add_argument("policy_file", type=Path)
+    validate_disclosure.add_argument("--json", action="store_true", dest="as_json")
 
     check = commands.add_parser(
         "check",
@@ -134,6 +142,11 @@ def run(argv: Sequence[str] | None = None) -> int:
         if args.command == "validate-policy":
             policy = load_policy(args.policy_file)
             print(format_policy(policy, as_json=args.as_json))
+            return 0
+
+        if args.command == "validate-disclosure-policy":
+            policy = load_disclosure_policy(args.policy_file)
+            print(format_disclosure_policy(policy, as_json=args.as_json))
             return 0
 
         if args.command == "check-folder":
