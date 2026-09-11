@@ -391,3 +391,57 @@ def test_check_folder_exports_report_without_overwriting(tmp_path, capsys):
 
     assert run(command) == 2
     assert "already exists" in capsys.readouterr().err
+
+
+def write_disclosure_policy(tmp_path, **changes):
+    payload = {
+        "schema_version": 1,
+        "name": "external",
+        "include_objective": True,
+        "include_context": False,
+        "include_decisions": True,
+        "include_risks": False,
+        "include_actions": True,
+        "include_owner_names": False,
+        "include_due_dates": True,
+    }
+    payload.update(changes)
+    path = tmp_path / "disclosure-policy.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_share_command_applies_disclosure_policy(tmp_path, capsys):
+    source = write_source(tmp_path)
+    policy = write_disclosure_policy(tmp_path)
+
+    assert run(
+        [
+            "share",
+            str(source),
+            "--policy",
+            str(policy),
+            "--as-of",
+            "2026-09-11",
+            "--json",
+        ]
+    ) == 0
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+
+    assert payload["policy"] == "external"
+    assert "context" not in payload
+    assert "risks" not in payload
+    assert payload["actions"][0]["owner"] is None
+    assert "Pilot feedback reviewed" not in output
+    assert "Timeline" not in output
+    assert "Garima" not in output
+
+
+def test_share_command_rejects_invalid_policy(tmp_path, capsys):
+    source = write_source(tmp_path)
+    policy = tmp_path / "bad-policy.json"
+    policy.write_text("not json", encoding="utf-8")
+
+    assert run(["share", str(source), "--policy", str(policy)]) == 2
+    assert "disclosure policy is not valid JSON" in capsys.readouterr().err
