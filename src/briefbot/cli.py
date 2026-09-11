@@ -11,18 +11,21 @@ from typing import Sequence
 
 from .batch import audit_brief_folder
 from .diffing import compare_briefs
+from .disclosure import build_shared_brief
 from .input import load_brief
 from .models import BriefError
 from .output import write_output
 from .planning import build_brief
 from .policy import load_policy
 from .readiness import ReadinessPolicy, assess_readiness
+from .share_policy import load_disclosure_policy
 from .report import (
     format_batch_readiness,
     format_brief,
     format_diff,
     format_policy,
     format_readiness,
+    format_shared_brief,
 )
 
 
@@ -84,6 +87,16 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("current", type=Path)
     diff.add_argument("--json", action="store_true", dest="as_json")
     diff.add_argument("--output", type=Path)
+
+    share = commands.add_parser(
+        "share",
+        help="render only values permitted by a disclosure policy",
+    )
+    share.add_argument("input", type=Path)
+    share.add_argument("--policy", type=Path, required=True)
+    share.add_argument("--as-of", type=_date, default=date.today())
+    share.add_argument("--json", action="store_true", dest="as_json")
+    share.add_argument("--output", type=Path)
 
     render = commands.add_parser(
         "render",
@@ -153,6 +166,17 @@ def run(argv: Sequence[str] | None = None) -> int:
             return 1 if result.changed else 0
 
         source = load_brief(args.input)
+        if args.command == "share":
+            policy = load_disclosure_policy(args.policy)
+            shared = build_shared_brief(source, as_of=args.as_of, policy=policy)
+            content = format_shared_brief(shared, as_json=args.as_json)
+            if args.output is None:
+                print(content, end="" if content.endswith("\n") else "\n")
+            else:
+                destination = write_output(args.output, content)
+                print(f"Wrote {destination.name}")
+            return 0
+
         if args.command == "validate":
             print(_validation_summary(source, as_json=args.as_json))
             return 0
