@@ -42,7 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="briefbot",
         description="Generate deterministic project briefs from local JSON notes",
     )
-    parser.add_argument("--version", action="version", version="briefbot 0.4.0")
+    parser.add_argument("--version", action="version", version="briefbot 0.5.0")
     commands = parser.add_subparsers(dest="command", required=True)
 
     validate = commands.add_parser(
