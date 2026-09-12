@@ -38,9 +38,20 @@ from .report import (
     format_readiness,
     format_shared_brief,
     shared_brief_to_dict,
+    format_workload,
+    workload_to_dict,
 )
 
-__version__ = "0.5.0"
+from .workload import (
+    BriefWorkload,
+    PortfolioWorkload,
+    WorkloadCounts,
+    summarize_brief_folder,
+    summarize_brief_workload,
+    validate_window_days,
+)
+
+__version__ = "0.6.0"
 
 __all__ = [
     "ActionItem",
@@ -51,13 +62,16 @@ __all__ = [
     "BriefError",
     "BriefDiff",
     "BriefInput",
+    "BriefWorkload",
     "DisclosurePolicy",
     "PlannedAction",
+    "PortfolioWorkload",
     "RiskItem",
     "SectionDelta",
     "SharedAction",
     "SharedBrief",
     "SharedRisk",
+    "WorkloadCounts",
     "ReadinessCode",
     "ReadinessFinding",
     "ReadinessPolicy",
@@ -77,13 +91,18 @@ __all__ = [
     "format_policy",
     "format_readiness",
     "format_shared_brief",
+    "format_workload",
     "disclosure_policy_from_dict",
     "discover_brief_files",
     "load_brief",
     "load_disclosure_policy",
     "load_policy",
+    "summarize_brief_folder",
+    "summarize_brief_workload",
     "policy_from_dict",
     "shared_brief_to_dict",
+    "validate_window_days",
+    "workload_to_dict",
     "write_output",
     "__version__",
 ]
