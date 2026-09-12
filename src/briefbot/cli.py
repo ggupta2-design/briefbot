@@ -115,6 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
     workload.add_argument("input", type=Path)
     workload.add_argument("--as-of", type=_date, default=date.today())
     workload.add_argument("--window-days", type=int, default=7)
+    workload.add_argument("--fail-on-overdue", action="store_true")
     workload.add_argument("--json", action="store_true", dest="as_json")
     workload.add_argument("--output", type=Path)
 
@@ -127,6 +128,7 @@ def build_parser() -> argparse.ArgumentParser:
     workload_folder.add_argument("--window-days", type=int, default=7)
     workload_folder.add_argument("--recursive", action="store_true")
     workload_folder.add_argument("--max-files", type=int, default=100)
+    workload_folder.add_argument("--fail-on-overdue", action="store_true")
     workload_folder.add_argument("--json", action="store_true", dest="as_json")
     workload_folder.add_argument("--output", type=Path)
 
@@ -204,7 +206,10 @@ def run(argv: Sequence[str] | None = None) -> int:
             else:
                 destination = write_output(args.output, content)
                 print(f"Wrote {destination.name}")
-            return 1 if result.invalid else 0
+            requires_attention = result.invalid > 0 or (
+                args.fail_on_overdue and result.counts.overdue > 0
+            )
+            return 1 if requires_attention else 0
 
         if args.command == "diff":
             previous = load_brief(args.previous)
@@ -231,7 +236,7 @@ def run(argv: Sequence[str] | None = None) -> int:
             else:
                 destination = write_output(args.output, content)
                 print(f"Wrote {destination.name}")
-            return 0
+            return 1 if args.fail_on_overdue and result.counts.overdue else 0
 
         if args.command == "share":
             policy = load_disclosure_policy(args.policy)
