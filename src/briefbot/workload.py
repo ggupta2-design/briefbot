@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 
+from .batch import discover_brief_files
+from .input import load_brief
 from .models import BriefError, BriefInput
 from .planning import ActionState, build_brief
 
@@ -88,4 +91,66 @@ def summarize_brief_workload(
         as_of=as_of,
         window_days=horizon,
         counts=WorkloadCounts(**counts),
+    )
+
+
+@dataclass(frozen=True)
+class PortfolioWorkload:
+    """Path-free workload forecast for a bounded folder of briefs."""
+
+    as_of: date
+    window_days: int
+    discovered: int
+    valid: int
+    invalid: int
+    counts: WorkloadCounts
+
+
+def summarize_brief_folder(
+    root: str | Path,
+    *,
+    as_of: date,
+    window_days: int = 7,
+    recursive: bool = False,
+    max_files: int = 100,
+) -> PortfolioWorkload:
+    """Aggregate workloads while isolating malformed briefs and omitting values."""
+
+    horizon = validate_window_days(window_days)
+    paths = discover_brief_files(
+        root,
+        recursive=recursive,
+        max_files=max_files,
+    )
+    totals = {
+        "overdue": 0,
+        "due_today": 0,
+        "due_within_window": 0,
+        "due_later": 0,
+        "unscheduled": 0,
+        "assigned": 0,
+        "unassigned": 0,
+    }
+    valid = 0
+    for path in paths:
+        try:
+            source = load_brief(path)
+        except BriefError:
+            continue
+        valid += 1
+        forecast = summarize_brief_workload(
+            source,
+            as_of=as_of,
+            window_days=horizon,
+        )
+        for name in totals:
+            totals[name] += getattr(forecast.counts, name)
+
+    return PortfolioWorkload(
+        as_of=as_of,
+        window_days=horizon,
+        discovered=len(paths),
+        valid=valid,
+        invalid=len(paths) - valid,
+        counts=WorkloadCounts(**totals),
     )
