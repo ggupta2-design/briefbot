@@ -14,6 +14,7 @@ BriefBot focuses on predictable, privacy-aware automation:
 - compare brief versions through value-free change summaries;
 - audit bounded folders with invalid-file isolation and aggregate findings;
 - create controlled share views through explicit disclosure policies;
+- forecast count-only action workload across one brief or a bounded portfolio;
 - write exports atomically without replacing existing files;
 - keep note contents local and require no account, API key, or network access.
 
@@ -35,6 +36,7 @@ briefbot check-folder ~/private/briefs \
   --as-of 2026-09-10 \
   --json
 briefbot validate-disclosure-policy examples/disclosure-policy.json
+briefbot workload-folder ~/private/briefs --as-of 2026-09-12 --window-days 14 --json
 briefbot share examples/launch-brief.json \
   --policy examples/disclosure-policy.json \
   --as-of 2026-09-11
@@ -62,6 +64,11 @@ The `check-folder` command scans a bounded set of JSON briefs without
 following symbolic links. It isolates invalid files and reports only aggregate
 ready, review-required, invalid, and finding counts.
 
+The `workload` and `workload-folder` commands report aggregate schedule and
+assignment counts without exposing project metadata, action text, owner names,
+filenames, or paths. Folder scans are bounded, isolate invalid briefs, and can
+signal overdue work through an optional exit status.
+
 The `share` command requires a versioned disclosure policy and removes
 disabled sections, owner names, and due dates before formatting. Included text
 may still be sensitive, so every result requires human review.
@@ -70,6 +77,7 @@ Rendered output contains the supplied notes, so review it before sharing.
 Exports are atomic and refuse to replace an existing path.
 
 See the [usage guide](docs/usage.md),
+[workload forecasting guide](docs/workload-forecasting.md),
 [folder readiness guide](docs/folder-readiness.md),
 [controlled sharing guide](docs/controlled-sharing.md),
 [brief comparison guide](docs/comparing-briefs.md),
