@@ -19,6 +19,7 @@ from .planning import build_brief
 from .policy import load_policy
 from .readiness import ReadinessPolicy, assess_readiness
 from .share_policy import load_disclosure_policy
+from .workload import summarize_brief_folder, summarize_brief_workload
 from .report import (
     format_batch_readiness,
     format_brief,
@@ -27,6 +28,7 @@ from .report import (
     format_policy,
     format_readiness,
     format_shared_brief,
+    format_workload,
 )
 
 
@@ -106,6 +108,28 @@ def build_parser() -> argparse.ArgumentParser:
     share.add_argument("--json", action="store_true", dest="as_json")
     share.add_argument("--output", type=Path)
 
+    workload = commands.add_parser(
+        "workload",
+        help="forecast one brief's action workload without exposing values",
+    )
+    workload.add_argument("input", type=Path)
+    workload.add_argument("--as-of", type=_date, default=date.today())
+    workload.add_argument("--window-days", type=int, default=7)
+    workload.add_argument("--json", action="store_true", dest="as_json")
+    workload.add_argument("--output", type=Path)
+
+    workload_folder = commands.add_parser(
+        "workload-folder",
+        help="forecast a bounded brief folder without exposing values",
+    )
+    workload_folder.add_argument("input", type=Path)
+    workload_folder.add_argument("--as-of", type=_date, default=date.today())
+    workload_folder.add_argument("--window-days", type=int, default=7)
+    workload_folder.add_argument("--recursive", action="store_true")
+    workload_folder.add_argument("--max-files", type=int, default=100)
+    workload_folder.add_argument("--json", action="store_true", dest="as_json")
+    workload_folder.add_argument("--output", type=Path)
+
     render = commands.add_parser(
         "render",
         help="render validated source notes as Markdown or JSON",
@@ -166,6 +190,22 @@ def run(argv: Sequence[str] | None = None) -> int:
                 print(f"Wrote {destination.name}")
             return 0 if result.all_ready else 1
 
+        if args.command == "workload-folder":
+            result = summarize_brief_folder(
+                args.input,
+                as_of=args.as_of,
+                window_days=args.window_days,
+                recursive=args.recursive,
+                max_files=args.max_files,
+            )
+            content = format_workload(result, as_json=args.as_json)
+            if args.output is None:
+                print(content)
+            else:
+                destination = write_output(args.output, content)
+                print(f"Wrote {destination.name}")
+            return 1 if result.invalid else 0
+
         if args.command == "diff":
             previous = load_brief(args.previous)
             current = load_brief(args.current)
@@ -179,6 +219,20 @@ def run(argv: Sequence[str] | None = None) -> int:
             return 1 if result.changed else 0
 
         source = load_brief(args.input)
+        if args.command == "workload":
+            result = summarize_brief_workload(
+                source,
+                as_of=args.as_of,
+                window_days=args.window_days,
+            )
+            content = format_workload(result, as_json=args.as_json)
+            if args.output is None:
+                print(content)
+            else:
+                destination = write_output(args.output, content)
+                print(f"Wrote {destination.name}")
+            return 0
+
         if args.command == "share":
             policy = load_disclosure_policy(args.policy)
             shared = build_shared_brief(source, as_of=args.as_of, policy=policy)
