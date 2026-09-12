@@ -80,3 +80,17 @@ private location until a person approves its destination.
 Action states are date calculations, not external actions. BriefBot never
 assigns work, changes a project system, sends reminders, or publishes a brief.
 A person must review the result and decide what to share or do next.
+
+
+## Workload forecast boundaries
+
+The `workload` and `workload-folder` commands retain only aggregate action
+counts. They do not include project metadata, note text, owner names, source
+filenames, paths, or per-brief breakdowns. Invalid files are counted without
+printing validation details that could identify their contents.
+
+Aggregate counts can still be sensitive. A report may reveal schedule pressure,
+staffing gaps, or portfolio size even when all source values are omitted.
+BriefBot does not anonymize small groups, encrypt reports, send files, verify
+recipients, or enforce an organization's disclosure policy. Review and protect
+every forecast according to its context.
