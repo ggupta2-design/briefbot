@@ -128,6 +128,37 @@ before formatting when disallowed. See
 [controlled-sharing.md](controlled-sharing.md) for the strict policy schema
 and important review boundary.
 
+## Forecast action workload
+
+Generate a value-free forecast for one brief:
+
+```bash
+briefbot workload ~/private/project-notes.json \
+  --as-of 2026-09-12 \
+  --window-days 14 \
+  --json
+```
+
+Aggregate a bounded portfolio without exposing brief names or action values:
+
+```bash
+briefbot workload-folder ~/private/briefs \
+  --as-of 2026-09-12 \
+  --window-days 14 \
+  --recursive \
+  --max-files 100 \
+  --fail-on-overdue \
+  --json \
+  --output ~/private/reports/workload.json
+```
+
+Forecasts separate overdue, due-today, near-term, later, and unscheduled work,
+plus assigned and unassigned totals. Folder forecasts isolate malformed files
+and return status 1 for invalid inputs; `--fail-on-overdue` also returns status
+1 when overdue actions exist. Reports contain counts only. See
+[workload-forecasting.md](workload-forecasting.md) for exact semantics and
+privacy boundaries.
+
 ## Export safely
 
 ```bash
