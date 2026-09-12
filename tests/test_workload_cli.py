@@ -68,3 +68,23 @@ def test_workload_command_rejects_invalid_window(tmp_path, capsys):
 
     assert "window_days" in output.err
     assert "Secret project" not in output.err
+
+
+def test_workload_can_signal_overdue_actions(tmp_path, capsys):
+    source = tmp_path / "private.json"
+    write_brief(source)
+
+    assert run(
+        [
+            "workload",
+            str(source),
+            "--as-of",
+            "2026-09-15",
+            "--fail-on-overdue",
+            "--json",
+        ]
+    ) == 1
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["actions"]["overdue"] == 1
+    assert "Sensitive task" not in json.dumps(payload)
