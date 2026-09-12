@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 — 2026-09-12
+
+- Added value-free action workload forecasts for individual briefs.
+- Added bounded folder forecasts with deterministic discovery and invalid-file isolation.
+- Added overdue, due-today, within-window, later, and unscheduled action totals.
+- Added assigned and unassigned workload coverage totals.
+- Added configurable forecast horizons with strict bounds.
+- Added privacy-safe text and JSON reports with no source or owner values.
+- Added automation-friendly optional overdue exit statuses.
+- Added atomic workload exports that never overwrite existing reports.
+- Added forecasting, aggregation, privacy, CLI, and export tests.
+- Added workload forecasting workflows and explicit privacy documentation.
+
 ## 0.5.0 — 2026-09-11
 
 - Added strict, versioned disclosure policies for controlled sharing.
