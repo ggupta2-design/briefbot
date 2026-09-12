@@ -10,6 +10,7 @@ from .diffing import BriefDiff
 from .disclosure import DisclosurePolicy, SharedBrief
 from .planning import Brief, PlannedAction
 from .readiness import ReadinessPolicy, ReadinessResult
+from .workload import BriefWorkload, PortfolioWorkload
 
 
 def _action_payload(item: PlannedAction) -> dict[str, Any]:
@@ -391,3 +392,73 @@ def format_disclosure_policy(
         f"Include owner names: {str(policy.include_owner_names).lower()}\n"
         f"Include due dates: {str(policy.include_due_dates).lower()}"
     )
+
+
+def workload_to_dict(
+    result: BriefWorkload | PortfolioWorkload,
+) -> dict[str, Any]:
+    """Return a stable value-free workload payload."""
+
+    payload: dict[str, Any] = {
+        "as_of": result.as_of.isoformat(),
+        "window_days": result.window_days,
+        "actions": {
+            "total": result.counts.total,
+            "overdue": result.counts.overdue,
+            "due_today": result.counts.due_today,
+            "due_within_window": result.counts.due_within_window,
+            "due_later": result.counts.due_later,
+            "unscheduled": result.counts.unscheduled,
+            "assigned": result.counts.assigned,
+            "unassigned": result.counts.unassigned,
+        },
+    }
+    if isinstance(result, PortfolioWorkload):
+        payload["briefs"] = {
+            "discovered": result.discovered,
+            "valid": result.valid,
+            "invalid": result.invalid,
+        }
+    return payload
+
+
+def format_workload(
+    result: BriefWorkload | PortfolioWorkload,
+    *,
+    as_json: bool = False,
+) -> str:
+    """Format a path-free, value-free action workload forecast."""
+
+    payload = workload_to_dict(result)
+    if as_json:
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    lines = [
+        "Brief workload forecast"
+        if isinstance(result, BriefWorkload)
+        else "Brief portfolio workload forecast",
+        f"As of: {result.as_of.isoformat()}",
+        f"Forecast window: {result.window_days} day(s)",
+    ]
+    if isinstance(result, PortfolioWorkload):
+        lines.extend(
+            [
+                f"Briefs discovered: {result.discovered}",
+                f"Briefs valid: {result.valid}",
+                f"Briefs invalid: {result.invalid}",
+            ]
+        )
+    actions = payload["actions"]
+    lines.extend(
+        [
+            f"Actions total: {actions['total']}",
+            f"Overdue: {actions['overdue']}",
+            f"Due today: {actions['due_today']}",
+            f"Due within window: {actions['due_within_window']}",
+            f"Due later: {actions['due_later']}",
+            f"Unscheduled: {actions['unscheduled']}",
+            f"Assigned: {actions['assigned']}",
+            f"Unassigned: {actions['unassigned']}",
+        ]
+    )
+    return "\n".join(lines)
