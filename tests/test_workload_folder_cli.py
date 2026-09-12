@@ -86,3 +86,23 @@ def test_workload_folder_rejects_exceeded_file_limit(tmp_path, capsys):
     assert "more than max_files=1" in output.err
     assert "one.json" not in output.err
     assert "two.json" not in output.err
+
+
+def test_workload_folder_can_signal_overdue_portfolio(tmp_path, capsys):
+    write_brief(tmp_path / "secret.json")
+
+    assert run(
+        [
+            "workload-folder",
+            str(tmp_path),
+            "--as-of",
+            "2026-09-13",
+            "--fail-on-overdue",
+            "--json",
+        ]
+    ) == 1
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["briefs"]["invalid"] == 0
+    assert payload["actions"]["overdue"] == 1
+    assert "Private deliverable" not in json.dumps(payload)
