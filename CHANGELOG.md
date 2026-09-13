@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.0 — 2026-09-13
+
+- Added read-only integrity audits for individual briefs and bounded folders.
+- Added normalized duplicate checks for context, decisions, risks, and actions.
+- Added conflicting action owner and due-date detection.
+- Added conflicting risk owner and risk/action overlap detection.
+- Added stable warning and error codes with deterministic aggregate counts.
+- Added path-free portfolio audits with malformed-file isolation.
+- Added privacy-safe text and JSON reports with automation-friendly statuses.
+- Added atomic integrity exports that never overwrite existing reports.
+- Added integrity engine, aggregation, privacy, CLI, and export tests.
+- Added integrity workflows, finding semantics, and safety documentation.
+
 ## 0.6.0 — 2026-09-12
 
 - Added value-free action workload forecasts for individual briefs.
