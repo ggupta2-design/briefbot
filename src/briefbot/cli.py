@@ -13,6 +13,7 @@ from .batch import audit_brief_folder
 from .diffing import compare_briefs
 from .disclosure import build_shared_brief
 from .input import load_brief
+from .integrity import audit_brief_folder_integrity, audit_brief_integrity
 from .models import BriefError
 from .output import write_output
 from .planning import build_brief
@@ -25,6 +26,7 @@ from .report import (
     format_brief,
     format_diff,
     format_disclosure_policy,
+    format_integrity,
     format_policy,
     format_readiness,
     format_shared_brief,
@@ -107,6 +109,26 @@ def build_parser() -> argparse.ArgumentParser:
     share.add_argument("--as-of", type=_date, default=date.today())
     share.add_argument("--json", action="store_true", dest="as_json")
     share.add_argument("--output", type=Path)
+
+    audit_integrity = commands.add_parser(
+        "audit-integrity",
+        help="audit one brief for duplicates and inconsistencies",
+    )
+    audit_integrity.add_argument("input", type=Path)
+    audit_integrity.add_argument("--as-of", type=_date, default=date.today())
+    audit_integrity.add_argument("--json", action="store_true", dest="as_json")
+    audit_integrity.add_argument("--output", type=Path)
+
+    audit_integrity_folder = commands.add_parser(
+        "audit-integrity-folder",
+        help="audit a bounded brief folder without exposing values",
+    )
+    audit_integrity_folder.add_argument("input", type=Path)
+    audit_integrity_folder.add_argument("--as-of", type=_date, default=date.today())
+    audit_integrity_folder.add_argument("--recursive", action="store_true")
+    audit_integrity_folder.add_argument("--max-files", type=int, default=100)
+    audit_integrity_folder.add_argument("--json", action="store_true", dest="as_json")
+    audit_integrity_folder.add_argument("--output", type=Path)
 
     workload = commands.add_parser(
         "workload",
@@ -192,6 +214,21 @@ def run(argv: Sequence[str] | None = None) -> int:
                 print(f"Wrote {destination.name}")
             return 0 if result.all_ready else 1
 
+        if args.command == "audit-integrity-folder":
+            result = audit_brief_folder_integrity(
+                args.input,
+                as_of=args.as_of,
+                recursive=args.recursive,
+                max_files=args.max_files,
+            )
+            content = format_integrity(result, as_json=args.as_json)
+            if args.output is None:
+                print(content)
+            else:
+                destination = write_output(args.output, content)
+                print(f"Wrote {destination.name}")
+            return 0 if result.clean else 1
+
         if args.command == "workload-folder":
             result = summarize_brief_folder(
                 args.input,
@@ -224,6 +261,16 @@ def run(argv: Sequence[str] | None = None) -> int:
             return 1 if result.changed else 0
 
         source = load_brief(args.input)
+        if args.command == "audit-integrity":
+            result = audit_brief_integrity(source, as_of=args.as_of)
+            content = format_integrity(result, as_json=args.as_json)
+            if args.output is None:
+                print(content)
+            else:
+                destination = write_output(args.output, content)
+                print(f"Wrote {destination.name}")
+            return 0 if result.clean else 1
+
         if args.command == "workload":
             result = summarize_brief_workload(
                 source,
