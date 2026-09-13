@@ -94,3 +94,17 @@ staffing gaps, or portfolio size even when all source values are omitted.
 BriefBot does not anonymize small groups, encrypt reports, send files, verify
 recipients, or enforce an organization's disclosure policy. Review and protect
 every forecast according to its context.
+
+
+## Integrity audit boundaries
+
+Integrity audit results retain only section totals and aggregate finding codes,
+severities, and counts. Portfolio results additionally retain aggregate brief
+counts. They omit project metadata, note text, descriptions, owners, dates,
+filenames, paths, validation details, and per-brief findings.
+
+Counts can still reveal the size or condition of a private portfolio. Keep
+reports in an appropriately protected location. Integrity findings are
+heuristics for human review: BriefBot cannot determine whether repetition is
+intentional, choose the correct owner or date, or repair a source. The audit
+never edits, merges, deletes, uploads, or publishes brief files.
