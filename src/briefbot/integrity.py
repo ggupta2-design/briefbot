@@ -81,7 +81,7 @@ def audit_brief_integrity(
     *,
     as_of: date,
 ) -> BriefIntegrityResult:
-    """Detect duplicate entries without changing or retaining source values."""
+    """Detect duplicate and inconsistent entries without retaining values."""
 
     duplicate_counts = {
         IntegrityCode.DUPLICATE_CONTEXT: _duplicate_count(
@@ -103,14 +103,48 @@ def audit_brief_integrity(
             for item in source.actions
         ),
     }
-    findings = tuple(
-        IntegrityFinding(code, IntegritySeverity.WARNING, count)
-        for code, count in sorted(
-            duplicate_counts.items(),
-            key=lambda item: item[0].value,
+    action_owners: dict[str, set[str | None]] = {}
+    action_dates: dict[str, set[date | None]] = {}
+    for item in source.actions:
+        key = _text_key(item.description)
+        action_owners.setdefault(key, set()).add(
+            _text_key(item.owner) if item.owner else None
         )
+        action_dates.setdefault(key, set()).add(item.due_on)
+
+    risk_owners: dict[str, set[str | None]] = {}
+    for item in source.risks:
+        key = _text_key(item.description)
+        risk_owners.setdefault(key, set()).add(
+            _text_key(item.owner) if item.owner else None
+        )
+
+    error_counts = {
+        IntegrityCode.ACTION_OWNER_CONFLICT: sum(
+            len(owners) > 1 for owners in action_owners.values()
+        ),
+        IntegrityCode.ACTION_DUE_DATE_CONFLICT: sum(
+            len(dates) > 1 for dates in action_dates.values()
+        ),
+        IntegrityCode.RISK_OWNER_CONFLICT: sum(
+            len(owners) > 1 for owners in risk_owners.values()
+        ),
+    }
+    overlap_count = len(set(action_owners) & set(risk_owners))
+    warning_counts = {
+        **duplicate_counts,
+        IntegrityCode.RISK_ACTION_OVERLAP: overlap_count,
+    }
+    findings = tuple(
+        IntegrityFinding(code, severity, count)
+        for severity, counts in (
+            (IntegritySeverity.ERROR, error_counts),
+            (IntegritySeverity.WARNING, warning_counts),
+        )
+        for code, count in counts.items()
         if count
     )
+    findings = tuple(sorted(findings, key=lambda item: item.code.value))
     return BriefIntegrityResult(
         as_of=as_of,
         context_items=len(source.context),
