@@ -128,6 +128,33 @@ before formatting when disallowed. See
 [controlled-sharing.md](controlled-sharing.md) for the strict policy schema
 and important review boundary.
 
+## Audit brief integrity
+
+Review one brief for duplicate and internally inconsistent records:
+
+```bash
+briefbot audit-integrity ~/private/project-notes.json \
+  --as-of 2026-09-13 \
+  --json
+```
+
+Audit a bounded folder and export a value-free aggregate report:
+
+```bash
+briefbot audit-integrity-folder ~/private/briefs \
+  --as-of 2026-09-13 \
+  --recursive \
+  --max-files 100 \
+  --json \
+  --output ~/private/reports/integrity.json
+```
+
+Integrity reports contain stable finding codes, severities, and counts. They
+omit all source values, filenames, paths, and per-brief details. Exit status 0
+means clean, 1 means review required, and 2 means invalid input or an unsafe
+output request. See [integrity-audits.md](integrity-audits.md) for finding
+semantics and interpretation limits.
+
 ## Forecast action workload
 
 Generate a value-free forecast for one brief:
