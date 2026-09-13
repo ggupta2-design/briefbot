@@ -6,8 +6,11 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import date
 from enum import Enum
+from pathlib import Path
 
-from .models import BriefInput
+from .batch import discover_brief_files
+from .input import load_brief
+from .models import BriefError, BriefInput
 
 
 class IntegritySeverity(str, Enum):
@@ -152,4 +155,98 @@ def audit_brief_integrity(
         risks=len(source.risks),
         actions=len(source.actions),
         findings=findings,
+    )
+
+
+@dataclass(frozen=True)
+class PortfolioIntegrityFinding:
+    """One aggregate finding code across a portfolio."""
+
+    code: IntegrityCode
+    severity: IntegritySeverity
+    occurrences: int
+    briefs: int
+
+
+@dataclass(frozen=True)
+class PortfolioIntegrityResult:
+    """Path-free integrity audit for a bounded folder."""
+
+    as_of: date
+    discovered: int
+    valid: int
+    invalid: int
+    clean_briefs: int
+    affected_briefs: int
+    findings: tuple[PortfolioIntegrityFinding, ...] = ()
+
+    @property
+    def clean(self) -> bool:
+        return self.discovered > 0 and self.invalid == 0 and self.affected_briefs == 0
+
+    @property
+    def finding_count(self) -> int:
+        return sum(item.occurrences for item in self.findings)
+
+    @property
+    def error_count(self) -> int:
+        return sum(
+            item.occurrences
+            for item in self.findings
+            if item.severity is IntegritySeverity.ERROR
+        )
+
+    @property
+    def warning_count(self) -> int:
+        return self.finding_count - self.error_count
+
+
+def audit_brief_folder_integrity(
+    root: str | Path,
+    *,
+    as_of: date,
+    recursive: bool = False,
+    max_files: int = 100,
+) -> PortfolioIntegrityResult:
+    """Aggregate integrity findings without retaining paths or source values."""
+
+    paths = discover_brief_files(root, recursive=recursive, max_files=max_files)
+    valid = clean_briefs = affected_briefs = 0
+    occurrences: dict[IntegrityCode, int] = {}
+    briefs: dict[IntegrityCode, int] = {}
+    severities: dict[IntegrityCode, IntegritySeverity] = {}
+    for path in paths:
+        try:
+            source = load_brief(path)
+        except BriefError:
+            continue
+        valid += 1
+        result = audit_brief_integrity(source, as_of=as_of)
+        if result.clean:
+            clean_briefs += 1
+        else:
+            affected_briefs += 1
+        for finding in result.findings:
+            occurrences[finding.code] = (
+                occurrences.get(finding.code, 0) + finding.count
+            )
+            briefs[finding.code] = briefs.get(finding.code, 0) + 1
+            severities[finding.code] = finding.severity
+
+    return PortfolioIntegrityResult(
+        as_of=as_of,
+        discovered=len(paths),
+        valid=valid,
+        invalid=len(paths) - valid,
+        clean_briefs=clean_briefs,
+        affected_briefs=affected_briefs,
+        findings=tuple(
+            PortfolioIntegrityFinding(
+                code=code,
+                severity=severities[code],
+                occurrences=occurrences[code],
+                briefs=briefs[code],
+            )
+            for code in sorted(occurrences, key=lambda item: item.value)
+        ),
     )
