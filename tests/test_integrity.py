@@ -61,3 +61,52 @@ def test_reports_clean_brief_without_retaining_values():
     assert result.actions == 1
     assert not hasattr(result, "title")
     assert not hasattr(result, "audience")
+
+
+def test_detects_conflicting_action_and_risk_records():
+    source = BriefInput(
+        title="Private",
+        audience="Internal",
+        objective="Coordinate",
+        risks=(
+            RiskItem("Launch delay", "A"),
+            RiskItem("launch delay", "B"),
+        ),
+        actions=(
+            ActionItem("Security review", "A", date(2026, 9, 14)),
+            ActionItem("security review", "B", date(2026, 9, 15)),
+            ActionItem("Launch delay", "C", date(2026, 9, 16)),
+        ),
+    )
+
+    result = audit_brief_integrity(source, as_of=date(2026, 9, 13))
+    by_code = {item.code: item for item in result.findings}
+
+    assert by_code[IntegrityCode.ACTION_OWNER_CONFLICT].count == 1
+    assert by_code[IntegrityCode.ACTION_DUE_DATE_CONFLICT].count == 1
+    assert by_code[IntegrityCode.RISK_OWNER_CONFLICT].count == 1
+    assert by_code[IntegrityCode.RISK_ACTION_OVERLAP].count == 1
+    assert result.error_count == 3
+    assert result.warning_count == 1
+
+
+def test_same_description_and_metadata_is_duplicate_not_conflict():
+    source = BriefInput(
+        title="Private",
+        audience="Internal",
+        objective="Coordinate",
+        risks=(RiskItem("Risk", "A"), RiskItem("risk", "a")),
+        actions=(
+            ActionItem("Task", "B", date(2026, 9, 14)),
+            ActionItem("task", "b", date(2026, 9, 14)),
+        ),
+    )
+
+    result = audit_brief_integrity(source, as_of=date(2026, 9, 13))
+    codes = {item.code for item in result.findings}
+
+    assert IntegrityCode.DUPLICATE_RISK in codes
+    assert IntegrityCode.DUPLICATE_ACTION in codes
+    assert IntegrityCode.ACTION_OWNER_CONFLICT not in codes
+    assert IntegrityCode.ACTION_DUE_DATE_CONFLICT not in codes
+    assert IntegrityCode.RISK_OWNER_CONFLICT not in codes
