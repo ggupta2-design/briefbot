@@ -15,6 +15,7 @@ BriefBot focuses on predictable, privacy-aware automation:
 - audit bounded folders with invalid-file isolation and aggregate findings;
 - create controlled share views through explicit disclosure policies;
 - forecast count-only action workload across one brief or a bounded portfolio;
+- audit duplicate and inconsistent records through value-free findings;
 - write exports atomically without replacing existing files;
 - keep note contents local and require no account, API key, or network access.
 
@@ -37,6 +38,7 @@ briefbot check-folder ~/private/briefs \
   --json
 briefbot validate-disclosure-policy examples/disclosure-policy.json
 briefbot workload-folder ~/private/briefs --as-of 2026-09-12 --window-days 14 --json
+briefbot audit-integrity-folder ~/private/briefs --as-of 2026-09-13 --json
 briefbot share examples/launch-brief.json \
   --policy examples/disclosure-policy.json \
   --as-of 2026-09-11
@@ -64,6 +66,11 @@ The `check-folder` command scans a bounded set of JSON briefs without
 following symbolic links. It isolates invalid files and reports only aggregate
 ready, review-required, invalid, and finding counts.
 
+The `audit-integrity` and `audit-integrity-folder` commands detect normalized
+duplicates, conflicting ownership or due dates, and risk/action overlap. Their
+reports contain stable codes and aggregate counts without source values, paths,
+or per-brief details.
+
 The `workload` and `workload-folder` commands report aggregate schedule and
 assignment counts without exposing project metadata, action text, owner names,
 filenames, or paths. Folder scans are bounded, isolate invalid briefs, and can
@@ -78,6 +85,7 @@ Exports are atomic and refuse to replace an existing path.
 
 See the [usage guide](docs/usage.md),
 [workload forecasting guide](docs/workload-forecasting.md),
+[integrity audit guide](docs/integrity-audits.md),
 [folder readiness guide](docs/folder-readiness.md),
 [controlled sharing guide](docs/controlled-sharing.md),
 [brief comparison guide](docs/comparing-briefs.md),
