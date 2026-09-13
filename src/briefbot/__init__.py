@@ -15,6 +15,16 @@ from .disclosure import (
     build_shared_brief,
 )
 from .input import brief_from_dict, load_brief
+from .integrity import (
+    BriefIntegrityResult,
+    IntegrityCode,
+    IntegrityFinding,
+    IntegritySeverity,
+    PortfolioIntegrityFinding,
+    PortfolioIntegrityResult,
+    audit_brief_folder_integrity,
+    audit_brief_integrity,
+)
 from .models import ActionItem, BriefError, BriefInput, RiskItem
 from .output import write_output
 from .planning import ActionState, Brief, PlannedAction, build_brief
@@ -34,6 +44,8 @@ from .report import (
     format_brief,
     format_diff,
     format_disclosure_policy,
+    format_integrity,
+    integrity_to_dict,
     format_policy,
     format_readiness,
     format_shared_brief,
@@ -51,7 +63,7 @@ from .workload import (
     validate_window_days,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
     "ActionItem",
@@ -62,10 +74,16 @@ __all__ = [
     "BriefError",
     "BriefDiff",
     "BriefInput",
+    "BriefIntegrityResult",
     "BriefWorkload",
     "DisclosurePolicy",
+    "IntegrityCode",
+    "IntegrityFinding",
+    "IntegritySeverity",
     "PlannedAction",
     "PortfolioWorkload",
+    "PortfolioIntegrityFinding",
+    "PortfolioIntegrityResult",
     "RiskItem",
     "SectionDelta",
     "SharedAction",
@@ -79,6 +97,8 @@ __all__ = [
     "ReadinessSeverity",
     "assess_readiness",
     "audit_brief_folder",
+    "audit_brief_folder_integrity",
+    "audit_brief_integrity",
     "brief_from_dict",
     "brief_to_dict",
     "build_shared_brief",
@@ -88,6 +108,8 @@ __all__ = [
     "format_brief",
     "format_diff",
     "format_disclosure_policy",
+    "format_integrity",
+    "integrity_to_dict",
     "format_policy",
     "format_readiness",
     "format_shared_brief",
