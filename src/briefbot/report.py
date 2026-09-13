@@ -8,6 +8,7 @@ from typing import Any
 from .batch import BatchReadinessResult
 from .diffing import BriefDiff
 from .disclosure import DisclosurePolicy, SharedBrief
+from .integrity import BriefIntegrityResult, PortfolioIntegrityResult
 from .planning import Brief, PlannedAction
 from .readiness import ReadinessPolicy, ReadinessResult
 from .workload import BriefWorkload, PortfolioWorkload
@@ -461,4 +462,98 @@ def format_workload(
             f"Unassigned: {actions['unassigned']}",
         ]
     )
+    return "\n".join(lines)
+
+
+def integrity_to_dict(
+    result: BriefIntegrityResult | PortfolioIntegrityResult,
+) -> dict[str, Any]:
+    """Return a stable integrity payload containing no source values."""
+
+    payload: dict[str, Any] = {
+        "as_of": result.as_of.isoformat(),
+        "clean": result.clean,
+        "finding_count": result.finding_count,
+        "error_count": result.error_count,
+        "warning_count": result.warning_count,
+        "findings": [
+            {
+                "code": item.code.value,
+                "severity": item.severity.value,
+                "count": (
+                    item.count
+                    if isinstance(result, BriefIntegrityResult)
+                    else item.occurrences
+                ),
+                **(
+                    {}
+                    if isinstance(result, BriefIntegrityResult)
+                    else {"briefs": item.briefs}
+                ),
+            }
+            for item in result.findings
+        ],
+    }
+    if isinstance(result, BriefIntegrityResult):
+        payload["summary"] = {
+            "context_items": result.context_items,
+            "decisions": result.decisions,
+            "risks": result.risks,
+            "actions": result.actions,
+        }
+    else:
+        payload["summary"] = {
+            "discovered": result.discovered,
+            "valid": result.valid,
+            "invalid": result.invalid,
+            "clean": result.clean_briefs,
+            "affected": result.affected_briefs,
+        }
+    return payload
+
+
+def format_integrity(
+    result: BriefIntegrityResult | PortfolioIntegrityResult,
+    *,
+    as_json: bool = False,
+) -> str:
+    """Format a value-free integrity audit for people or automation."""
+
+    payload = integrity_to_dict(result)
+    if as_json:
+        return json.dumps(payload, indent=2, sort_keys=True)
+
+    portfolio = isinstance(result, PortfolioIntegrityResult)
+    lines = [
+        "Brief portfolio integrity audit" if portfolio else "Brief integrity audit",
+        f"As of: {result.as_of.isoformat()}",
+        f"Status: {'clean' if result.clean else 'review required'}",
+        f"Errors: {result.error_count}",
+        f"Warnings: {result.warning_count}",
+    ]
+    summary = payload["summary"]
+    if portfolio:
+        lines.extend(
+            [
+                f"Discovered: {summary['discovered']}",
+                f"Valid: {summary['valid']}",
+                f"Invalid: {summary['invalid']}",
+                f"Clean briefs: {summary['clean']}",
+                f"Affected briefs: {summary['affected']}",
+            ]
+        )
+    if not result.findings:
+        lines.append("Findings: none")
+    else:
+        lines.append("Findings:")
+        for item in payload["findings"]:
+            scope = (
+                f" across {item['briefs']} brief(s)"
+                if "briefs" in item
+                else ""
+            )
+            lines.append(
+                f"- {item['code']}: {item['count']} "
+                f"({item['severity']}){scope}"
+            )
     return "\n".join(lines)
